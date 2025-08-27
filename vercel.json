@@ -1,13 +1,8 @@
 {
-  "functions": {
-    "backend/api/index.py": {
-      "runtime": "python3.9"
-    }
-  },
   "routes": [
     {
       "src": "/api/chat",
-      "dest": "/backend/api/index.py"
+      "dest": "/api/chat.py"
     },
     {
       "src": "/",
