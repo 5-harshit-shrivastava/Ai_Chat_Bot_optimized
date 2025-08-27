@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/chat.py": {
+      "runtime": "python3.11"
+    }
+  },
   "routes": [
     {
       "src": "/api/chat",
