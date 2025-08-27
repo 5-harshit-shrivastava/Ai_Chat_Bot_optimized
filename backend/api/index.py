@@ -197,45 +197,54 @@ class GeminiService:
     def generate_response(self, query, context_documents):
         """Generate response using retrieved context"""
         try:
-            # Prepare context from retrieved documents
+            # Prepare enhanced context from retrieved documents
             context = ""
             sources = []
             
             for i, doc in enumerate(context_documents, 1):
                 similarity = doc.get('similarity_score', 0)
-                context += f"\nDocument {i} (Relevance: {similarity:.2f}): {doc['title']}\n{doc['content'][:500]}...\n"
-                sources.append(doc['title'])
-            
-            # Create optimized prompt
-            prompt = f"""Based on the following agricultural documents, answer the user's question about fertilizers.
+                title = doc['title']
+                content = doc['content']
+                
+                # Enhanced context formatting with full content
+                context += f"""
+=== DOCUMENT {i}: {title} (Relevance Score: {similarity:.3f}) ===
+{content}
 
-Context:
+"""
+                sources.append(title)
+            
+            # Create focused prompt for maximum relevance
+            prompt = f"""You are an expert agricultural advisor. Analyze the provided documents and answer the user's question with the most relevant information.
+
+DOCUMENTS:
 {context}
 
-Question: {query}
+QUESTION: {query}
 
-Instructions:
-- Provide a direct, practical answer for farmers
-- If the context doesn't contain relevant information, say "I do not have enough information"
-- Keep the response concise and actionable
-- Focus on fertilizer recommendations, application rates, and best practices
+INSTRUCTIONS:
+- Analyze ALL the provided documents thoroughly
+- Extract and provide the MOST RELEVANT information that directly answers the question
+- Include ALL specific details that relate to the question (dosages, methods, microorganisms, etc.)
+- Be comprehensive and accurate
+- If multiple documents are relevant, combine the information intelligently
+- Focus on giving the user exactly what they're asking for
 
-Answer:"""
+ANSWER:"""
             
             payload = {
                 "contents": [{
                     "parts": [{"text": prompt}]
                 }],
                 "generationConfig": {
-                    "temperature": 0.3,  # Lower for more focused responses
-                    "topK": 20,          # Reduced for faster processing
-                    "topP": 0.8,         # More focused
-                    "maxOutputTokens": 512  # Shorter responses for speed
+                    "temperature": 0.1,  # Very low for maximum accuracy
+                    "topP": 0.9          # High for comprehensive responses
+                    # No token limits - let Gemini provide complete responses
                 }
             }
             
             headers = {"Content-Type": "application/json"}
-            response = requests.post(self.api_url, headers=headers, json=payload, timeout=10)  # Reduced timeout
+            response = requests.post(self.api_url, headers=headers, json=payload, timeout=30)  # Increased timeout for thorough analysis
             response.raise_for_status()
             
             result = response.json()
