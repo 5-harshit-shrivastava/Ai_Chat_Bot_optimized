@@ -392,7 +392,7 @@ class handler(BaseHTTPRequestHandler):
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
             
-            if self.path.endswith('/chat') or self.path == '/api/chat' or self.path == '/chat':
+            if self.path == '/chat' or self.path == '/api/chat':
                 data = json.loads(post_data.decode())
                 # Support both 'query' and 'message' parameters
                 query = data.get('query', data.get('message', '')).strip()

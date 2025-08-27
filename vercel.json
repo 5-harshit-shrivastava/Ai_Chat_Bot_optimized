@@ -1,7 +1,21 @@
 {
   "functions": {
-    "api/index.py": {
+    "backend/api/index.py": {
       "runtime": "python3.9"
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/chat",
+      "dest": "/backend/api/index.py"
+    },
+    {
+      "src": "/",
+      "dest": "/frontend/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ]
 }
