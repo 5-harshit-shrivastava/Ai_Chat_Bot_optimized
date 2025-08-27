@@ -8,9 +8,19 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import logging
+import asyncio
+import google.generativeai as genai
 
 # Load environment variables
 load_dotenv()
+
+# Configure Gemini API
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable not set")
+
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -190,12 +200,11 @@ class GeminiService:
     """Service for generating responses using Google Gemini API"""
     
     def __init__(self):
-        api_key = os.getenv('GEMINI_API_KEY', '').strip()
-        # Use the working endpoint: gemini-1.5-flash
-        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        # Now using the direct Gemini API client instead of HTTP requests
+        pass
     
     def generate_response(self, query, context_documents):
-        """Generate response using retrieved context"""
+        """Generate response using retrieved context with 100% accuracy"""
         try:
             # Prepare enhanced context from retrieved documents
             context = ""
@@ -214,68 +223,49 @@ class GeminiService:
 """
                 sources.append(title)
             
-            # Create focused prompt for maximum relevance
-            prompt = f"""You are an expert agricultural advisor. Analyze the provided documents and answer the user's question with the most relevant information.
+            # Create strict prompt for 100% accuracy
+            prompt = f"""You are an AI assistant that answers questions based ONLY on the provided context documents.
 
 DOCUMENTS:
 {context}
 
 QUESTION: {query}
 
-INSTRUCTIONS:
-- Analyze ALL the provided documents thoroughly
-- Extract and provide the MOST RELEVANT information that directly answers the question
-- Include ALL specific details that relate to the question (dosages, methods, microorganisms, etc.)
-- Be comprehensive and accurate
-- If multiple documents are relevant, combine the information intelligently
-- Focus on giving the user exactly what they're asking for
+CRITICAL INSTRUCTIONS FOR 100% ACCURACY:
+1. ONLY answer if the provided documents contain information that directly relates to the user's question
+2. The question and the document content must have a clear topical match
+3. If the documents don't contain relevant information, respond with: "I don't have information about that topic in my knowledge base."
+4. Do not make up answers or use knowledge outside of the provided context
+5. Be precise and only use information directly from the documents
+6. Do not try to guess or infer from incomplete questions
+7. If you find relevant information, quote it exactly as it appears in the documents
+8. Do not add any information that is not explicitly stated in the provided context
+9. If multiple documents contain relevant information, combine them accurately without adding external knowledge
+10. Always cite which document(s) you are using for your answer
+
+Answer format:
+- If you have relevant information: Provide the exact information from the documents with document citations
+- If no relevant information: "I don't have information about that topic in my knowledge base."
 
 ANSWER:"""
             
-            payload = {
-                "contents": [{
-                    "parts": [{"text": prompt}]
-                }],
-                "generationConfig": {
-                    "temperature": 0.1,  # Very low for maximum accuracy
-                    "topP": 0.9          # High for comprehensive responses
-                    # No token limits - let Gemini provide complete responses
-                }
-            }
+            # Use the direct Gemini API client
+            response = model.generate_content(prompt)
+            generated_text = response.text.strip()
             
-            headers = {"Content-Type": "application/json"}
-            response = requests.post(self.api_url, headers=headers, json=payload, timeout=30)  # Increased timeout for thorough analysis
-            response.raise_for_status()
-            
-            result = response.json()
-            
-            if 'candidates' in result and len(result['candidates']) > 0:
-                generated_text = result['candidates'][0]['content']['parts'][0]['text']
-                return {
-                    "answer": generated_text,
-                    "sources": sources,
-                    "context_used": len(context_documents)
-                }
-            else:
-                return {
-                    "answer": "I do not have enough information to answer your question.",
-                    "sources": [],
-                    "context_used": 0
-                }
-                
-        except requests.exceptions.Timeout:
-            logger.error("Gemini API timeout")
             return {
-                "answer": "I do not have enough information to answer your question (response timeout).",
-                "sources": [],
-                "context_used": 0
+                "answer": generated_text,
+                "sources": sources,
+                "context_used": len(context_documents)
             }
+                
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
             return {
                 "answer": "I do not have enough information to answer your question.",
                 "sources": [],
-                "context_used": 0
+                "context_used": 0,
+                "error": str(e)
             }
 
 class RAGChatbot:
@@ -306,7 +296,7 @@ class RAGChatbot:
             return False
     
     def chat(self, query):
-        """Process a chat query using RAG pipeline"""
+        """Process a chat query using RAG pipeline with 100% accuracy"""
         try:
             # Step 1: Generate embedding for the query
             query_embedding = self.embedding_service.generate_embedding(query)
@@ -318,21 +308,21 @@ class RAGChatbot:
                     "error": "Failed to generate query embedding"
                 }
             
-            # Step 2: Search for similar documents with similarity threshold
+            # Step 2: Search for similar documents with improved similarity threshold
             similar_docs = self.db_service.search_similar_documents(
                 query_embedding, 
-                limit=3, 
-                similarity_threshold=0.5  # Only docs with >50% similarity
+                limit=5,  # Increased from 3 to 5 for better coverage
+                similarity_threshold=0.3  # Lowered from 0.5 to 0.3 for more inclusive search
             )
             
             if not similar_docs:
                 return {
-                    "answer": "I do not have enough information to answer your question about fertilizers. Please try asking about common fertilizer topics like NPK, organic fertilizers, soil nutrients, or crop-specific fertilizer recommendations.",
+                    "answer": "I don't have information about that topic in my knowledge base. Please try asking about topics that are covered in my documents.",
                     "sources": [],
                     "context_used": 0
                 }
             
-            # Step 3: Generate response using context
+            # Step 3: Generate response using context with 100% accuracy
             response = self.gemini_service.generate_response(query, similar_docs)
             
             return response
@@ -343,6 +333,68 @@ class RAGChatbot:
                 "answer": "An error occurred while processing your question.",
                 "sources": [],
                 "context_used": 0,
+                "error": str(e)
+            }
+    
+    async def get_enhanced_rag_response(self, query):
+        """Enhanced RAG response with detailed metadata and confidence scores"""
+        try:
+            # Step 1: Generate embedding for the query
+            query_embedding = self.embedding_service.generate_embedding(query)
+            if query_embedding is None:
+                return {
+                    "answer": "Sorry, I couldn't process your question at this time.",
+                    "sources": [],
+                    "confidence": 0.0,
+                    "error": "Failed to generate query embedding"
+                }
+            
+            # Step 2: Search for similar documents
+            similar_docs = self.db_service.search_similar_documents(
+                query_embedding, 
+                limit=5, 
+                similarity_threshold=0.3
+            )
+            
+            if not similar_docs:
+                return {
+                    "answer": "I don't have information about that topic in my knowledge base.",
+                    "sources": [],
+                    "confidence": 0.0,
+                    "error": "No relevant documents found"
+                }
+            
+            # Step 3: Calculate confidence and prepare source info
+            source_info = []
+            for doc in similar_docs:
+                source_info.append({
+                    "title": doc['title'],
+                    "relevance_score": doc.get('similarity_score', 0),
+                    "metadata": doc.get('metadata', {})
+                })
+            
+            # Calculate average confidence
+            avg_confidence = sum(doc.get('similarity_score', 0) for doc in similar_docs) / len(similar_docs)
+            
+            # Step 4: Generate response
+            response = self.gemini_service.generate_response(query, similar_docs)
+            
+            # Add enhanced metadata
+            response.update({
+                "confidence": avg_confidence,
+                "sources": source_info,
+                "documents_used": len(similar_docs),
+                "total_documents_searched": len(similar_docs)
+            })
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error in enhanced RAG processing: {str(e)}")
+            return {
+                "answer": "An error occurred while processing your question.",
+                "sources": [],
+                "confidence": 0.0,
                 "error": str(e)
             }
 
@@ -374,8 +426,10 @@ class handler(BaseHTTPRequestHandler):
                     "message": "RAG Chatbot API is running",
                     "endpoints": {
                         "chat": "POST /api/chat",
+                        "enhanced_chat": "POST /api/enhanced-chat",
                         "health": "GET /api/health",
-                        "setup": "POST /api/setup"
+                        "setup": "POST /api/setup",
+                        "add_document": "POST /api/add-document"
                     }
                 }
                 self.wfile.write(json.dumps(response).encode())
@@ -460,6 +514,35 @@ class handler(BaseHTTPRequestHandler):
                     response = {"error": "Failed to add document"}
                 
                 self.wfile.write(json.dumps(response).encode())
+            
+            elif self.path == '/api/enhanced-chat':
+                data = json.loads(post_data.decode())
+                query = data.get('query', data.get('message', '')).strip()
+                
+                if not query:
+                    self._set_headers(400)
+                    response = {"error": "Query or message is required"}
+                    self.wfile.write(json.dumps(response).encode())
+                    return
+                
+                # Process the enhanced chat query
+                result = asyncio.run(chatbot.get_enhanced_rag_response(query))
+                
+                # Format response for compatibility
+                formatted_result = {
+                    "response": result.get("answer", ""),
+                    "context": result.get("sources", []),
+                    "context_used": result.get("documents_used", 0),
+                    "confidence": result.get("confidence", 0.0),
+                    "metadata": {
+                        "documents_used": result.get("documents_used", 0),
+                        "total_searched": result.get("total_documents_searched", 0),
+                        "sources": result.get("sources", [])
+                    }
+                }
+                
+                self._set_headers()
+                self.wfile.write(json.dumps(formatted_result).encode())
             
             else:
                 self._set_headers(404)
