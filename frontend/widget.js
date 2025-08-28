@@ -80,8 +80,8 @@ class RAGChatbotWidget {
     toggleWidget() {
         if (this.isOpen) this.closeWidget(); else this.openWidget();
     }
-    openWidget() { this.widget.classList.add('open'); this.isOpen = true; this.inputField.focus(); }
-    closeWidget() { this.widget.classList.remove('open'); this.isOpen = false; }
+    openWidget() { this.widget.classList.add('open'); this.isOpen = true; if (this.toggle) this.toggle.style.display = 'none'; this.inputField.focus(); }
+    closeWidget() { this.widget.classList.remove('open'); this.isOpen = false; if (this.toggle) this.toggle.style.display = 'flex'; }
 
     toggleVoiceInput() {
         if (!this.recognition) return;
