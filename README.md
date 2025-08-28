@@ -193,3 +193,5 @@ For questions or support, please open an issue in the GitHub repository.
 ---
 
 **Built with ❤️ for farmers and agricultural professionals** 🌾
+
+r
