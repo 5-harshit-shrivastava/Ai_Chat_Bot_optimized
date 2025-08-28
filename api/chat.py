@@ -12,6 +12,9 @@ import logging
 # Load environment variables
 load_dotenv()
 
+# Retrieval configuration
+TOP_K = int(os.getenv('TOP_K', '5'))  # number of most-similar rows to use
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -214,23 +217,23 @@ class GeminiService:
 """
                 sources.append(title)
             
-            # Create focused prompt for maximum relevance
-            prompt = f"""You are an expert agricultural advisor. Analyze the provided documents and answer the user's question with the most relevant information.
+            # Create focused prompt that uses only the provided top-K documents and returns only relevant details
+            prompt = f"""You are an expert agricultural assistant. Answer the user's question using ONLY the information contained in the provided documents (these are the top-{len(context_documents)} most similar rows from the database).
 
-DOCUMENTS:
+DOCUMENTS (verbatim):
 {context}
 
-QUESTION: {query}
+QUESTION:
+{query}
 
-INSTRUCTIONS:
-- Analyze ALL the provided documents thoroughly
-- Extract and provide the MOST RELEVANT information that directly answers the question
-- Include ALL specific details that relate to the question (dosages, methods, microorganisms, etc.)
-- Be comprehensive and accurate
-- If multiple documents are relevant, combine the information intelligently
-- Focus on giving the user exactly what they're asking for
+STRICT INSTRUCTIONS:
+- Use ONLY the above documents as your knowledge source; do not use external knowledge.
+- Provide ONLY the details that directly answer the question. Do not summarize unrelated sections.
+- Do NOT dump or restate full documents; extract and report only the relevant facts, steps, values, and instructions that address the question.
+- If multiple documents contribute relevant parts, combine them succinctly.
+- If the documents do not contain the answer, reply: "I don't have information about that topic in my knowledge base."
 
-ANSWER:"""
+FINAL ANSWER (concise, directly relevant details only):"""
             
             payload = {
                 "contents": [{
@@ -318,10 +321,10 @@ class RAGChatbot:
                     "error": "Failed to generate query embedding"
                 }
             
-            # Step 2: Search for similar documents with similarity threshold
+            # Step 2: Search for similar documents with similarity threshold (use top-K)
             similar_docs = self.db_service.search_similar_documents(
-                query_embedding, 
-                limit=3, 
+                query_embedding,
+                limit=TOP_K,
                 similarity_threshold=0.5  # Only docs with >50% similarity
             )
             
