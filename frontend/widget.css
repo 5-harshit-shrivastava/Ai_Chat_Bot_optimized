@@ -104,7 +104,7 @@ body {
 /* Input */
 .rag-chatbot-input { padding: 14px; border-top: 1px solid rgba(53,94,59,0.12); background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); }
 .rag-chatbot-input-container { display:flex; gap:8px; align-items:center; background:#ffffff; border:1px solid rgba(53,94,59,0.18); border-radius: 22px; padding: 8px 12px; }
-.rag-chatbot-input-field { flex:1; border:none; background:transparent; outline:none; color:#2a3a2a; font-size:14px; font-family: 'Poppins', sans-serif; }
+.rag-chatbot-input-field { flex:1; min-width:0; border:none; background:transparent; outline:none; color:#2a3a2a; font-size:14px; font-family: 'Poppins', sans-serif; }
 .rag-chatbot-input-field::placeholder { color:#6c8b6b; }
 .rag-chatbot-voice-btn, .rag-chatbot-send-btn { background:none; border:none; padding:6px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: background .2s ease; }
 .rag-chatbot-voice-btn:hover, .rag-chatbot-send-btn:hover { background: rgba(111,179,109,0.12); }
@@ -118,6 +118,15 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
     .rag-chatbot-widget { left:0; right:0; bottom:0; width:100%; max-height: 78vh; border-radius: 16px 16px 0 0; }
+}
+
+/* Tighten input layout on very small screens to avoid overlap */
+@media (max-width: 480px) {
+    .rag-chatbot-input { padding: 10px; }
+    .rag-chatbot-input-container { gap:6px; padding:6px 8px; }
+    .rag-chatbot-input-field { font-size:13px; }
+    .rag-chatbot-voice-btn, .rag-chatbot-send-btn { width:36px; height:36px; padding:0; flex: 0 0 36px; }
+    .rag-chatbot-voice-btn svg, .rag-chatbot-send-btn svg { width:18px; height:18px; }
 }
 
 
