@@ -129,5 +129,18 @@ body {
     .rag-chatbot-voice-btn svg, .rag-chatbot-send-btn svg { width:18px; height:18px; }
 }
 
+/* Use small viewport units so the widget fits above mobile keyboards */
+@supports (height: 100svh) {
+    @media (max-width: 768px) {
+        .rag-chatbot-widget { max-height: calc(100svh - 16px); }
+    }
+}
+
+/* Improve scrolling behavior on iOS */
+.rag-chatbot-messages { -webkit-overflow-scrolling: touch; }
+
+/* Respect safe-area inset for devices with home indicator */
+.rag-chatbot-input { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+
 
 
