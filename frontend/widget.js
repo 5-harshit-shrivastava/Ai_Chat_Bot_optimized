@@ -37,22 +37,24 @@ class RAGChatbotWidget {
     }
 
     bindEvents() {
-        this.toggle.addEventListener('click', () => this.toggleWidget());
-        this.closeBtn.addEventListener('click', () => this.closeWidget());
-        this.sendBtn.addEventListener('click', () => this.sendMessage());
-        this.voiceBtn.addEventListener('click', () => this.toggleVoiceInput());
+        if (this.toggle) this.toggle.addEventListener('click', () => this.toggleWidget());
+        if (this.closeBtn) this.closeBtn.addEventListener('click', () => this.closeWidget());
+        if (this.sendBtn) this.sendBtn.addEventListener('click', () => this.sendMessage());
+        if (this.voiceBtn) this.voiceBtn.addEventListener('click', () => this.toggleVoiceInput());
 
-        this.inputField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
+        if (this.inputField) {
+            this.inputField.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
 
-        this.inputField.addEventListener('input', () => {
-            const hasText = this.inputField.value.trim().length > 0;
-            this.sendBtn.classList.toggle('active', hasText);
-        });
+            this.inputField.addEventListener('input', () => {
+                const hasText = this.inputField.value.trim().length > 0;
+                if (this.sendBtn) this.sendBtn.classList.toggle('active', hasText);
+            });
+        }
     }
 
     initializeSpeechRecognition() {
@@ -73,15 +75,24 @@ class RAGChatbotWidget {
             this.recognition.onerror = () => { this.stopListening(); };
             this.recognition.onend = () => { this.stopListening(); };
         } else {
-            this.voiceBtn.style.display = 'none';
+            if (this.voiceBtn) this.voiceBtn.style.display = 'none';
         }
     }
 
     toggleWidget() {
         if (this.isOpen) this.closeWidget(); else this.openWidget();
     }
-    openWidget() { this.widget.classList.add('open'); this.isOpen = true; if (this.toggle) this.toggle.style.display = 'none'; this.inputField.focus(); }
-    closeWidget() { this.widget.classList.remove('open'); this.isOpen = false; if (this.toggle) this.toggle.style.display = 'flex'; }
+    openWidget() {
+        if (!this.widget) return;
+        this.widget.classList.add('open');
+        this.isOpen = true;
+        if (this.toggle) this.toggle.style.display = 'none';
+        // Avoid triggering mobile keyboard immediately
+        if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+            if (this.inputField) this.inputField.focus();
+        }
+    }
+    closeWidget() { if (!this.widget) return; this.widget.classList.remove('open'); this.isOpen = false; if (this.toggle) this.toggle.style.display = 'flex'; }
 
     toggleVoiceInput() {
         if (!this.recognition) return;
@@ -89,18 +100,18 @@ class RAGChatbotWidget {
     }
     startListening() {
         if (!this.recognition) return;
-        this.isListening = true; this.voiceBtn.style.background = '#ff4444'; this.inputField.placeholder = 'Listening...'; this.recognition.start();
+        this.isListening = true; if (this.voiceBtn) this.voiceBtn.style.background = '#ff4444'; if (this.inputField) this.inputField.placeholder = 'Listening...'; this.recognition.start();
     }
     stopListening() {
-        this.isListening = false; this.voiceBtn.style.background = ''; this.inputField.placeholder = 'Type your question ?'; if (this.recognition) this.recognition.stop();
+        this.isListening = false; if (this.voiceBtn) this.voiceBtn.style.background = ''; if (this.inputField) this.inputField.placeholder = 'Type your question ?'; if (this.recognition) this.recognition.stop();
     }
 
     async sendMessage() {
-        const message = this.inputField.value.trim();
+        const message = (this.inputField ? this.inputField.value : '').trim();
         if (!message || this.isTyping) return;
         this.addMessage(message, 'user');
-        this.inputField.value = '';
-        this.sendBtn.classList.remove('active');
+        if (this.inputField) this.inputField.value = '';
+        if (this.sendBtn) this.sendBtn.classList.remove('active');
         this.showTyping();
         try {
             const base = this.config.apiBaseUrl;
@@ -145,6 +156,10 @@ class RAGChatbotWidget {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.ragChatbot = new RAGChatbotWidget({ position: 'bottom-right' });
+    // Auto-open the widget on load (no need to click a toggle button)
+    if (window.ragChatbot && typeof window.ragChatbot.openWidget === 'function') {
+        window.ragChatbot.openWidget();
+    }
 
     // Handle mobile keyboards: resize to visual viewport and keep messages visible
     if (window.visualViewport) {
@@ -155,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const maxH = Math.max(320, Math.floor(vv.height - 16));
             document.documentElement.style.setProperty('--rag-widget-maxH', maxH + 'px');
             const widget = document.getElementById('ragChatbotWidget');
-            if (widget) widget.style.maxHeight = `min(78vh, var(--rag-widget-maxH))`;
+            if (widget) widget.style.maxHeight = `min(70vh, var(--rag-widget-maxH))`;
             const messages = document.getElementById('ragChatbotMessages');
             if (messages) messages.scrollTop = messages.scrollHeight;
         };

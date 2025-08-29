@@ -19,8 +19,9 @@ body {
 /* Widget Container */
 .rag-chatbot-widget {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 420px;
     max-height: 640px;
     background: #ffffff;
@@ -118,9 +119,11 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
     .rag-chatbot-widget {
+        top: auto;
         left: 0;
         right: 0;
         bottom: 0;
+        transform: none;
         width: 100%;
         max-height: 70vh; /* smaller to avoid overlapping mobile keyboard */
         border-radius: 16px 16px 0 0;
