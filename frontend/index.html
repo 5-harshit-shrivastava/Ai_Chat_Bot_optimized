@@ -4,25 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAG AI Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./widget.css">
 </head>
 <body>
     <main class="demo-page">
         <section class="demo-copy">
             <h1>RAG AI Chatbot Demo</h1>
-            <p>Click the blue button at the bottom-right to start chatting.</p>
+            <p>Start chatting with the assistant using the window at the bottom.</p>
         </section>
     </main>
 
-    <!-- Toggle Button -->
-    <div class="rag-chatbot-toggle" id="ragChatbotToggle" aria-label="Open chat" role="button">
-        <svg viewBox="0 0 24 24">
-            <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-        </svg>
-    </div>
+    <!-- Toggle removed: chat opens automatically -->
 
-    <!-- Chat Widget -->
-    <div class="rag-chatbot-widget" id="ragChatbotWidget" aria-live="polite">
+    <!-- Chat Widget (starts open) -->
+    <div class="rag-chatbot-widget open" id="ragChatbotWidget" aria-live="polite">
         <!-- Header (AskDisha-like) -->
         <div class="rag-chatbot-header">
             <div class="rag-chatbot-header-content">
