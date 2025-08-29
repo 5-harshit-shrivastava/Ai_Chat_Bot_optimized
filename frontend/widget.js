@@ -161,16 +161,15 @@ document.addEventListener('DOMContentLoaded', () => {
         window.ragChatbot.openWidget();
     }
 
-    // Handle mobile keyboards: resize to visual viewport and keep messages visible
+    // Handle mobile keyboards: fit to visual viewport and keep messages visible
     if (window.visualViewport) {
         const updateForViewport = () => {
             const vv = window.visualViewport;
             if (!vv) return;
-            // Limit widget height to available viewport
-            const maxH = Math.max(320, Math.floor(vv.height - 16));
+            const maxH = Math.max(300, Math.floor(vv.height - 12));
             document.documentElement.style.setProperty('--rag-widget-maxH', maxH + 'px');
             const widget = document.getElementById('ragChatbotWidget');
-            if (widget) widget.style.maxHeight = `min(70vh, var(--rag-widget-maxH))`;
+            if (widget) widget.style.maxHeight = `var(--rag-widget-maxH)`;
             const messages = document.getElementById('ragChatbotMessages');
             if (messages) messages.scrollTop = messages.scrollHeight;
         };
