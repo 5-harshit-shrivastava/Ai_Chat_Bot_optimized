@@ -118,6 +118,7 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+    html, body { height: 100%; overflow: hidden; }
     .rag-chatbot-widget {
         top: auto;
         left: 0;
@@ -125,10 +126,17 @@ body {
         bottom: 0;
         transform: none;
         width: 100%;
-        height: auto;
-        max-height: 92vh; /* use almost full height on phones */
+        height: var(--rag-widget-maxH, 65vh);
+        max-height: var(--rag-widget-maxH, 85vh); /* fill available visual viewport without wasting space */
         border-radius: 14px 14px 0 0;
     }
+    .rag-chatbot-header { padding: 12px 14px; }
+    .rag-chatbot-avatar { width: 36px; height: 36px; }
+    .rag-chatbot-avatar img { width: 26px; height: 26px; }
+    .rag-chatbot-title { font-size: 14px; }
+    .rag-chatbot-subtitle { font-size: 11px; }
+    .rag-chatbot-messages { padding: 12px; }
+    .rag-chatbot-message-content { font-size: 13px; }
 }
 
 /* Tighten input layout on very small screens to avoid overlap */
@@ -143,7 +151,7 @@ body {
 /* Use small viewport units so the widget fits above mobile keyboards */
 @supports (height: 100svh) {
     @media (max-width: 768px) {
-        .rag-chatbot-widget { max-height: calc(100svh - 12px); }
+        .rag-chatbot-widget { height: min(calc(100svh - 8px), var(--rag-widget-maxH, 85vh)); max-height: min(calc(100svh - 8px), var(--rag-widget-maxH, 85vh)); }
     }
 }
 

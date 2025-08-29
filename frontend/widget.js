@@ -166,10 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const updateForViewport = () => {
             const vv = window.visualViewport;
             if (!vv) return;
-            const maxH = Math.max(300, Math.floor(vv.height - 12));
-            document.documentElement.style.setProperty('--rag-widget-maxH', maxH + 'px');
+            // Aim to use most of the vv height but keep some breathing room
+            const maxH = Math.max(320, Math.floor(vv.height - 8));
+            document.documentElement.style.setProperty('--rag-widget-maxH', Math.min(maxH, Math.floor(window.innerHeight * 0.85)) + 'px');
             const widget = document.getElementById('ragChatbotWidget');
-            if (widget) widget.style.maxHeight = `var(--rag-widget-maxH)`;
+            if (widget) {
+                widget.style.maxHeight = `var(--rag-widget-maxH)`;
+                widget.style.height = `var(--rag-widget-maxH)`;
+                widget.style.bottom = '0px';
+            }
             const messages = document.getElementById('ragChatbotMessages');
             if (messages) messages.scrollTop = messages.scrollHeight;
         };
